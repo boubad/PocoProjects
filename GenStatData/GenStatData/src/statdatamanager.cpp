@@ -99,6 +99,8 @@ namespace info {
 		" CONSTRAINT uc_variable UNIQUE (datasetid, sigle),"
 		" CONSTRAINT fk_variable_dataset FOREIGN KEY (datasetid) REFERENCES dbdataset (datasetid) ON DELETE CASCADE"
 		" )";
+	static const char *SQL_FIND_VARIABLES_TYPES =
+		"SELECT variableid,vartype FROM dbvariable WHERE datasetid = ?";
 	static const char *SQL_DATASET_VARIABLES_IDS =
 		"SELECT variableid"
 		" FROM dbvariable WHERE datasetid = ?";
@@ -141,8 +143,7 @@ namespace info {
 		"DELETE FROM dbvalue WHERE variableid = ?";
 	static const char *SQL_DELETE_INDIV_VALUES =
 		"DELETE FROM dbvalue WHERE individ = ?";
-	static const char *SQL_FIND_VARIABLE_TYPE =
-		"SELECT vartype FROM dbvariable WHERE variableid = ?";
+	
 	static const char *SQL_FIND_DATASET_VALUES_COUNT = "SELECT COUNT(*)"
 		" FROM dbvalue a, dbvariable b"
 		" WHERE a.variableid = b.variableid AND b.datasetid = ?";
@@ -195,6 +196,29 @@ namespace info {
 	static std::string TYPE_ODBC(SZ_ODBC);
 	Poco::Mutex st_mutex;
 	///////////////////////////////////////////////
+	bool StatDataManager::find_dataset_variables_types(const DTODataset &oSet, strings_map &oMap) {
+		poco_assert_dbg(this->is_valid());
+		bool bRet = false;
+		try {
+			oMap.clear();
+			Poco::UInt64 nDatasetId = oSet.id();
+			if (nDatasetId == 0) {
+				return (false);
+			}
+			Session & sess = *(this->m_session);
+			std::string sql(SQL_FIND_VARIABLES_TYPES);
+			std::vector<VariableIdValue > oVec;
+			sess << sql, use(nDatasetId), into(oVec), now;
+			for (auto it = oVec.begin(); it != oVec.end(); ++it) {
+				IntType key = (IntType)(*it).first;
+				std::string val = (*it).second;
+				oMap[key] = val;
+			}// it
+			bRet = true;
+		}
+		catch (Poco::Exception & /*ex*/) {}
+		return (bRet);
+	}//find_dataset_variables_types
 	bool StatDataManager::remove_dataset(const DTODataset &oSet) {
 		poco_assert_dbg(this->is_valid());
 		bool bRet = false;

@@ -42,6 +42,9 @@
     <ClInclude Include="include\info_dto.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\indiv.h">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

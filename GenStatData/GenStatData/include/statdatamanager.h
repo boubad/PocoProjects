@@ -64,6 +64,7 @@ namespace info {
 		bool find_dataset_values(const DTODataset &oSet, strings_mapmap &oMap, int skip, int taken);
 		bool remove_values(const std::vector<DTOValue> &oVals);
 		//
+		bool find_dataset_variables_types(const DTODataset &oSet, strings_map &oMap);
 	}; // class 
 	///////////////////////////////////////
 	

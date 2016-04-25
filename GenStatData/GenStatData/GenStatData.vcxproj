@@ -153,6 +153,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\indiv.h" />
     <ClInclude Include="include\info_dto.h" />
     <ClInclude Include="include\statdatamanager.h" />
     <ClInclude Include="src\stat_dto_typehandlers.h" />
