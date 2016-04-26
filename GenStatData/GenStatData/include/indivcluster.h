@@ -23,8 +23,9 @@ namespace info {
 		IndivSet m_set;
 	public:
 		IndivCluster() {}
-		template <typename UX>
-		IndivCluster(const UX aIndex, const Indiv<UX> &oInd) :IndivType(aIndex, oInd) {}
+		IndivCluster(const U aIndex, const Indiv<U> &oInd) :IndivType(aIndex) {
+			this->m_set.insert(oInd);
+		}
 		IndivCluster(const IndivClusterType &other) {
 			DataTypeMap oMap;
 			IndivSet oSet;
@@ -32,10 +33,10 @@ namespace info {
 			IndivClusterType &oCluster = const_cast<IndivClusterType &>(other);
 			oCluster.get_index_center_members(aIndex, oMap, oSet);
 			IndivType::set_center(oMap);
-			IndexType::index(aIndex);
+			IndivType::index(aIndex);
 			this->m_set = oSet;
 		}
-		IndivCkusterType & operator=(const IndivTypeCluster &other) {
+		IndivClusterType & operator=(const IndivClusterType &other) {
 			if (this != other) {
 				DataTypeMap oMap;
 				IndivSet oSet;
@@ -55,7 +56,7 @@ namespace info {
 		void get_index_center_members(IndexType &aIndex,
 			DataTypeMap &oMap, IndivSet &oSet) {
 			Poco::RWLock::ScopedReadLock oLock(this->_mutex);
-			aIndex = this->index();
+			aIndex = IndivType::index();
 			IndivType::get_center(oMap);
 			oSet = this->m_set;
 		}
@@ -85,11 +86,13 @@ namespace info {
 			std::map<IndexType, size_t> counts;
 			std::map<IndexType, double> sommes;
 			for (auto it = oSet.begin(); it != oSet.end(); ++it) {
-				const IndivType &oInd = *it;
-				for (auto jt = oInd.begin(); jt != oInd.end(); ++jt) {
-					const IndexType key = (*jt).begin();
-					const DbValue & vv = (*jt).second;
-					const double v = vv.double_value();
+				IndivType &oInd = const_cast<IndivType &>(*it);
+				DataTypeMap m;
+				oInd.get_center(m);
+				for (auto jt = m.begin(); jt != m.end(); ++jt) {
+					IndexType key = (*jt).first;
+					DbValue & vv = (*jt).second;
+					double v = vv.double_value();
 					if (counts.find(key) == counts.end()) {
 						counts[key] = 1;
 						sommes[key] = v;
@@ -126,11 +129,7 @@ namespace info {
 	public:
 		virtual void index(const IndexType n) {
 			Poco::RWLock::ScopedWriteLock oLock(this->_mutex);
-			this->m_index = n;
-		}
-		virtual void add_variable(const IndexType aVarIndex, const DataType v) {
-			Poco::RWLock::ScopedWriteLock oLock(this->_mutex);
-			IndivType::add_variable(aVarIndex, v);
+			IndivType::index(n);
 		}
 		virtual void clear(void) {
 			Poco::RWLock::ScopedWriteLock oLock(this->_mutex);

@@ -61,9 +61,6 @@ namespace info {
 		virtual void clear(void) {
 			this->m_map.clear();
 		}
-		virtual void add_variable(const IndexType aVarIndex, const boost::any &v) {
-			this->m_map[aVarIndex] = DbValue(v);
-		}
 		virtual void get_center(DataTypeMap &oMap) {
 			oMap = this->m_map;
 		}

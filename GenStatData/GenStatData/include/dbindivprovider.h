@@ -112,8 +112,8 @@ namespace info {
 				temp[i] = i;
 			}
 			std::random_shuffle(temp.begin(), temp.end());
-			oRes.resize(nc);
-			for (size_t i = 0; i < nc; ++i) {
+			oRes.resize(nCount);
+			for (size_t i = 0; i < (size_t)nCount; ++i) {
 				size_t pos = temp[i];
 				IndivTypePtr oInd;
 				if (!this->indiv_at(pos, oInd)) {
