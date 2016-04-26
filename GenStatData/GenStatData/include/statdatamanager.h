@@ -9,6 +9,7 @@
 #include <map>
 //////////////////////////////
 #include <Poco/Types.h>
+#include <boost/any.hpp>
 ///////////////////////////
 namespace Poco {
 	namespace Data {
@@ -24,6 +25,8 @@ namespace info {
 	public:
 		typedef std::map<IntType, std::string> strings_map;
 		typedef std::map<IntType, strings_map> strings_mapmap;
+		typedef std::map<IntType, boost::any> anys_map;
+		typedef std::map<IntType, anys_map> anys_mapmap;
 	private:
 		std::unique_ptr<Poco::Data::Session> m_session;
 	private:
@@ -42,7 +45,8 @@ namespace info {
 		bool get_all_datasets(std::vector<DTODataset> &oVec);
 		//
 		bool find_indiv(DTOIndiv &oInd);
-		bool find_indiv(const IntType nIndivId,DTOIndiv &oInd, std::map<IntType, std::string> &oValuesMap);
+		bool find_indiv(const IntType nIndivId,DTOIndiv &oInd, strings_map &oValuesMap);
+		bool find_indiv(const IntType nIndivId, DTOIndiv &oInd, anys_map &oValuesMap);
 		bool find_dataset_indivs_count(DTODataset &oSet, int &nCount);
 		bool find_dataset_indivs_ids(const DTODataset &oSet, std::vector<info::IntType> &oIds);
 		bool find_dataset_indivs(const DTODataset &oSet, std::vector<DTOIndiv> &oInds);
@@ -51,7 +55,8 @@ namespace info {
 		//
 		bool find_variable(DTOVariable &oVar);
 		bool maintains_variables(const std::vector<DTOVariable> &oVars);
-		bool find_variable(const IntType nVariableId, DTOVariable &oVar, std::map<IntType, std::string> &oValuesMap);
+		bool find_variable(const IntType nVariableId, DTOVariable &oVar, strings_map &oValuesMap);
+		bool find_variable(const IntType nVariableId, DTOVariable &oVar, anys_map &oValuesMap);
 		bool find_dataset_variables_count(DTODataset &oSet, int &nCount);
 		bool find_dataset_variables_ids(const DTODataset &oSet, std::vector<info::IntType> &oIds);
 		bool find_dataset_variables(const DTODataset &oSet, std::vector<DTOVariable> &oVars);
@@ -62,6 +67,7 @@ namespace info {
 		bool find_dataset_values_count(const DTODataset &oSet, int &nCount);
 		bool find_dataset_values(const DTODataset &oSet, std::vector<DTOValue> &oVec, int skip, int taken);
 		bool find_dataset_values(const DTODataset &oSet, strings_mapmap &oMap, int skip, int taken);
+		bool find_dataset_values(const DTODataset &oSet, anys_mapmap &oMap, int skip, int taken);
 		bool remove_values(const std::vector<DTOValue> &oVals);
 		//
 		bool find_dataset_variables_types(const DTODataset &oSet, strings_map &oMap);

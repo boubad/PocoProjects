@@ -14,7 +14,8 @@
 #include <vector>
 #include <iostream>
 //////////////////////////////
-#include "..\include\statdatamanager.h"
+#include "../include/statdatamanager.h"
+#include "../include/dbvalue.h"
 #include "stat_dto_typehandlers.h"
 ///////////////////////////////////
 namespace info {
@@ -143,7 +144,7 @@ namespace info {
 		"DELETE FROM dbvalue WHERE variableid = ?";
 	static const char *SQL_DELETE_INDIV_VALUES =
 		"DELETE FROM dbvalue WHERE individ = ?";
-	
+
 	static const char *SQL_FIND_DATASET_VALUES_COUNT = "SELECT COUNT(*)"
 		" FROM dbvalue a, dbvariable b"
 		" WHERE a.variableid = b.variableid AND b.datasetid = ?";
@@ -195,6 +196,27 @@ namespace info {
 	static std::string TYPE_SQLITE(SZ_SQLITE);
 	static std::string TYPE_ODBC(SZ_ODBC);
 	Poco::Mutex st_mutex;
+	/////////////////////////////////////////////////
+	static boost::any convert_value(const std::string &s, const std::string &vartype) {
+		boost::any vRet;
+		DbValue v(s);
+		if ((vartype == "bool") || (vartype == "booleen") || (vartype == "boolean") || (vartype == "logic") || (vartype == "logique")) {
+			vRet = v.bool_value();
+		}
+		else if ((vartype == "int") || (vartype == "integer") || (vartype == "entier")) {
+			vRet = v.int_value();
+		}
+		else if (vartype == "float") {
+			vRet = v.float_value();
+		}
+		else if ((vartype == "double") || (vartype == "real") || (vartype == "reel")) {
+			vRet = v.double_value();
+		}
+		else {
+			vRet = s;
+		}
+		return	vRet;
+	}//convert_value
 	///////////////////////////////////////////////
 	bool StatDataManager::find_dataset_variables_types(const DTODataset &oSet, strings_map &oMap) {
 		poco_assert_dbg(this->is_valid());
@@ -321,7 +343,7 @@ namespace info {
 			}
 			Poco::UInt64 nId = xVar.id();
 			std::string sqlvalues(SQL_DELETE_VARIABLE_VALUES);
-			sess << sqlvalues, use(nId),now;
+			sess << sqlvalues, use(nId), now;
 			std::string sql(SQL_REMOVE_VARIABLE);
 			sess << sql, use(nId), now;
 			if (bInTrans) {
@@ -408,6 +430,53 @@ namespace info {
 				else {
 					strings_map & m = (*jt).second;
 					m[nVarId] = sval;
+				}
+			}// it
+			bRet = true;
+		}
+		catch (Poco::Exception & /*ex*/) {}
+		return (bRet);
+	}//find_dataset_values
+	bool StatDataManager::find_dataset_values(const DTODataset &oSet, anys_mapmap &oMap, int skip, int taken) {
+		poco_assert_dbg(this->is_valid());
+		bool bRet = false;
+		try {
+			Poco::UInt64 nDatasetId = oSet.id();
+			if (nDatasetId == 0) {
+				return (false);
+			}
+			strings_map oTypes;
+			if (!this->find_dataset_variables_types(oSet, oTypes)) {
+				return (false);
+			}
+			std::vector<DTOValue> oVec;
+			Poco::UInt64 offset = skip;
+			Poco::UInt64 limit = taken;
+			Session & sess = *(this->m_session);
+			std::string sql(SQL_FIND_DATASET_VALUES);
+			sess << sql, use(nDatasetId), use(limit), use(offset), into(oVec), now;
+			for (auto it = oVec.begin(); it != oVec.end(); ++it) {
+				const DTOValue &v = *it;
+				const IntType nVarId = v.variable_id();
+				const IntType nIndId = v.indiv_id();
+				std::string sval = Poco::trim(v.value());
+				if (sval.empty()) {
+					continue;
+				}
+				std::string vartype;
+				if (oTypes.find(nVarId) != oTypes.end()) {
+					vartype = oTypes[nVarId];
+				}
+				boost::any vr = convert_value(sval, vartype);
+				auto jt = oMap.find(nIndId);
+				if (jt == oMap.end()) {
+					anys_map m;
+					m[nVarId] = vr;
+					oMap[nIndId] = m;
+				}
+				else {
+					anys_map & m = (*jt).second;
+					m[nVarId] = vr;
 				}
 			}// it
 			bRet = true;
@@ -538,7 +607,47 @@ namespace info {
 		return (bRet);
 	}// find_value
 	//////////////////////////////////////////////
-	bool  StatDataManager::find_variable(const IntType nVariableId, DTOVariable &oVar, std::map<IntType, std::string> &oValuesMap) {
+	bool  StatDataManager::find_variable(const IntType nVariableId, DTOVariable &oVar, anys_map &oValuesMap) {
+		poco_assert_dbg(this->is_valid());
+		bool bRet = false;
+		try {
+			oValuesMap.clear();
+			if (nVariableId == 0) {
+				return (false);
+			}
+			Session & sess = *(this->m_session);
+			Poco::UInt64 nId = nVariableId;
+			std::string vartype;
+			{
+				std::string sql(SQL_VARIABLE_BY_ID);
+				DTOVariable xVar;
+				poco_assert_dbg(xVar.id() == 0);
+				sess << sql, use(nId), into(xVar), now;
+				if (xVar.id() == 0) {
+					return (false);
+				}
+				oVar = xVar;
+				vartype = oVar.vartype();
+			}
+			{
+				std::vector<VariableIdValue > oVec;
+				std::string sql(SQL_FIND_VARIABLE_VALUES);
+				sess << sql, use(nId), into(oVec), now;
+				for (auto it = oVec.begin(); it != oVec.end(); ++it) {
+					IntType key = (IntType)(*it).first;
+					std::string val = (*it).second;
+					boost::any v = convert_value(val, vartype);
+					oValuesMap[key] = v;
+				}// it
+			}
+			bRet = true;
+		}
+		catch (Poco::Exception & ex) {
+			std::string message = ex.message();
+		}
+		return (bRet);
+	}//find_variable
+	bool  StatDataManager::find_variable(const IntType nVariableId, DTOVariable &oVar, strings_map &oValuesMap) {
 		poco_assert_dbg(this->is_valid());
 		bool bRet = false;
 		try {
@@ -719,7 +828,60 @@ namespace info {
 		return (bRet);
 	}// find_variable
 	////////////////////////////////////////////////
-	bool  StatDataManager::find_indiv(const IntType nIndivId, DTOIndiv &oInd, std::map<IntType, std::string> &oValuesMap) {
+	bool  StatDataManager::find_indiv(const IntType nIndivId, DTOIndiv &oInd, anys_map &oValuesMap) {
+		poco_assert_dbg(this->is_valid());
+		bool bRet = false;
+		try {
+			oValuesMap.clear();
+			if (nIndivId == 0) {
+				return (false);
+			}
+			Session & sess = *(this->m_session);
+			Poco::UInt64 nId = nIndivId;
+			strings_map oTypes;
+			{
+				std::string sql(SQL_INDIV_BY_ID);
+				DTOIndiv xInd;
+				poco_assert_dbg(xInd.id() == 0);
+				sess << sql, use(nId), into(xInd), now;
+				if (xInd.id() == 0) {
+					return (false);
+				}
+				oInd = xInd;
+				Poco::UInt64 nDatasetId = oInd.parent_id();
+				std::string sqlType(SQL_FIND_VARIABLES_TYPES);
+				std::vector<VariableIdValue> ovec;
+				sess << sqlType, use(nDatasetId), into(ovec), now;
+				for (auto it = ovec.begin(); it != ovec.end(); ++it) {
+					IntType key = (IntType)(*it).first;
+					std::string s = (*it).second;
+					oTypes[key] = s;
+				}// it
+			}
+			{
+				std::vector<VariableIdValue > oVec;
+				std::string sql(SQL_FIND_INDIV_VALUES);
+				sess << sql, use(nId), into(oVec), now;
+				for (auto it = oVec.begin(); it != oVec.end(); ++it) {
+					IntType key = (IntType)(*it).first;
+					std::string val = (*it).second;
+					boost::any vRet;
+					std::string vartype;
+					if (oTypes.find(key) != oTypes.end()) {
+						vartype = oTypes[key];
+					}
+					vRet = convert_value(val, vartype);
+					oValuesMap[key] = vRet;
+				}// it
+			}
+			bRet = true;
+		}
+		catch (Poco::Exception & ex) {
+			std::string message = ex.message();
+		}
+		return (bRet);
+	}//find_indiv
+	bool  StatDataManager::find_indiv(const IntType nIndivId, DTOIndiv &oInd, strings_map &oValuesMap) {
 		poco_assert_dbg(this->is_valid());
 		bool bRet = false;
 		try {
