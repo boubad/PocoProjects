@@ -3,6 +3,7 @@
 #define __DBINDIVPROVIDER_H__
 /////////////////////////////////////
 #include <vector>
+#include <algorithm>
 ///////////////////////////////
 #include "indiv.h"
 #include "statdatamanager.h"
@@ -13,7 +14,7 @@ namespace info {
 	class DBIndivProvider : public IIndivProvider<U> {
 	public:
 		typedef Indiv<U> IndivType;
-		typedef typename IndivType::IndivTypePtr IndivTypePtr;
+		typedef std::shared_ptr<IndivType> IndivTypePtr;
 		typedef std::vector<IndivTypePtr> IndivTypePtrVector;
 		typedef std::vector<IntType> ints_vector;
 	public:
@@ -40,7 +41,7 @@ namespace info {
 	public:
 		virtual bool is_valid(void) {
 			StatDataManager *p = this->m_pman;
-			return ((p != nullptr) && p->is_valid());
+			return ((p != nullptr) && p->is_valid() && (this->m_set.id() != 0));
 		}// is_valid
 		virtual bool reset(void) {
 			if (this->is_valid()) {
@@ -64,8 +65,8 @@ namespace info {
 				}
 				IndivTypePtr o = this->m_vec[pos];
 				if (o.get() == nullptr) {
-					DTOIndiv &xInd;
-					std::map<UX, boost::any> oMap;
+					DTOIndiv xInd;
+					std::map<U, boost::any> oMap;
 					StatDataManager *p = this->m_pman;
 					assert(p != nullptr);
 					IntType nIndivId = this->m_ids[pos];
@@ -97,6 +98,31 @@ namespace info {
 			}
 			return (false);
 		}
+		virtual bool get_random_indivs(IndivTypePtrVector &oRes, int nCount = 1) {
+			oRes.clear();
+			if (!this->is_valid()) {
+				return (false);
+			}
+			const size_t nc = this->m_ids.size();
+			if ((nCount < 1) && (nCount > nc)) {
+				return (false);
+			}
+			std::vector<size_t> temp(nc);
+			for (size_t i = 0; i < nc; ++i) {
+				temp[i] = i;
+			}
+			std::random_shuffle(temp.begin(), temp.end());
+			oRes.resize(nc);
+			for (size_t i = 0; i < nc; ++i) {
+				size_t pos = temp[i];
+				IndivTypePtr oInd;
+				if (!this->indiv_at(pos, oInd)) {
+					return (false);
+				}
+				oRes[i] = oInd;
+			}// i
+			return (true);
+		}//get_random_points
 	}; // class DBIndivProvider<U>
 	///////////////////////////////////////////
 }// namespace info

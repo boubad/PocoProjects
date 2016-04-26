@@ -5,6 +5,7 @@
 #include <cassert>
 #include <memory>
 #include <map>
+#include <vector>
 ///////////////////////////////////////////
 #include "dbvalue.h"
 //////////////////////////////////////////
@@ -42,10 +43,10 @@ namespace info {
 		}
 		virtual ~Indiv() {}
 		bool operator<(const IndivType &other) const {
-			return (this->m_index < other.m_index));
+			return (this->m_index < other.m_index);
 		}
 		bool operator==(const IndivType &other) const {
-			return (this->m_index == other.m_index));
+			return (this->m_index == other.m_index);
 		}
 		IndexType operator()(void) const {
 			return (this->m_index);
@@ -69,7 +70,7 @@ namespace info {
 		virtual void set_center(const DataTypeMap &oMap) {
 			this->m_map = oMap;
 		}// set_center
-		double compute_distance(const IndivType &other) {
+		double compute_distance(IndivType &other) {
 			DataTypeMap oMap1, oMap2;
 			this->get_center(oMap1);
 			other.get_center(oMap2);
@@ -79,7 +80,7 @@ namespace info {
 				const U key = (*it).first;
 				if (oMap1.find(key) != oMap1.end()) {
 					const DbValue & v1 = (*it).second;
-					const DbValue & v2 = )oMap1[key];
+					const DbValue & v2 = oMap1[key];
 					double t = v1.double_value() - v2.double_value();
 					total += t * t;
 					++nc;
@@ -97,12 +98,14 @@ namespace info {
 	public:
 		typedef Indiv<U> IndivType;
 		typedef std::shared_ptr<IndivType> IndivTypePtr;
+		typedef std::vector<IndivTypePtr> IndivTypePtrVector;
 	public:
 		virtual bool is_valid(void) = 0;
 		virtual bool reset(void) = 0;
 		virtual bool count(int &nCount) = 0;
 		virtual bool indiv_at(size_t pos, IndivTypePtr &oInd) = 0;
 		virtual bool next(IndivTypePtr &oInd) = 0;
+		virtual bool get_random_indivs(IndivTypePtrVector &oRes, int nCount = 1) = 0;
 	}; // interface IIndivProvider<U>
 	//////////////////////////////////////////
 }// namespace info

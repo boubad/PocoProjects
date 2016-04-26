@@ -3,6 +3,8 @@
 *.lo
 *.o
 *.obj
+*.db
+*.sqlite
 
 # Precompiled Headers
 *.gch
