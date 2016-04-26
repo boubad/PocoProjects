@@ -75,20 +75,21 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\GenStatData\include;D:\VS2015\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\Debug;D:\VS2015\lib\x86\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\GenStatData\include;D:\VS2015\include;C:\VS2015\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\Debug;D:\VS2015\lib\x86\Debug;C:\VS2015\lib\x86\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\GenStatData\include;D:\VS2015\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\GenStatData\include;D:\VS2015\include;C:\VS2015\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\GenStatData\include;D:\VS2015\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\GenStatData\include;D:\VS2015\include;C:\VS2015\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\VS2015\lib\x86\Release;C:\VS2015\lib\x86\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\GenStatData\include;D:\VS2015\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\GenStatData\include;D:\VS2015\include;C:\VS2015\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
